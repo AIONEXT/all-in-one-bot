@@ -22,6 +22,7 @@ The repository is organized for commercial use: a permissive MIT license, a Dock
 - [Testing & CI](#testing--ci)
 - [Security Considerations](#security-considerations)
 - [License](#license)
+- [Contributing](#contributing)
 
 ---
 
@@ -48,7 +49,11 @@ graph TD;
     Backend -->|Integrations| Ext[External Services (Google, Outlook, Slack)];
 ```
 
-The repository contains only the **backend** and a **demo client**. Production deployments would swap the in‑memory event handling for a persistent store (PostgreSQL + pgvector) and hook a learning engine (OpenAI fine‑tuning, LangChain, etc.).
+The diagram shows the main data flow:
+
+* Devices send telemetry to the **backend** via HTTPS POSTs and maintain a **WebSocket** for real‑time commands.
+* The backend can persist events in a **database**, forward them to a **learning engine** (e.g., OpenAI fine‑tuning) and call third‑party APIs (Google Calendar, Slack, etc.).
+* The **mirror‑mask UI** lives on the device side and reacts to messages received over the WebSocket.
 
 ---
 
@@ -56,8 +61,8 @@ The repository contains only the **backend** and a **demo client**. Production d
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/your‑org/all‑in‑one‑bot.git
-   cd all‑in‑one‑bot
+   git clone https://github.com/your-org/all-in-one-bot.git
+   cd all-in-one-bot
    ```
 
 2. **Create a virtual environment**
@@ -82,7 +87,7 @@ The repository contains only the **backend** and a **demo client**. Production d
    source .venv/bin/activate
    python client/example_client.py
    ```
-   You should see the client posting dummy events every 5 seconds and a ping/pong exchange over the WebSocket.
+   You should see the client posting dummy events every 5 seconds and a ping/pong exchange over the WebSocket.
 
 6. **Verify**
    ```bash
@@ -98,7 +103,7 @@ The repository ships with a Dockerfile that builds the backend and a `docker‑c
 
 ```bash
 # Build and start the backend (exposes port 8000)
-docker compose up --build -d
+ docker compose up --build -d
 ```
 
 You can now reach the API at `http://localhost:8000`. The client works unchanged because it still points to `http://localhost:8000`.
@@ -121,12 +126,12 @@ All routes are protected by JWT authentication (except `/token` in the demo).
 ## Customization & Extensibility
 
 ### Adding a Database
-Replace the `# TODO: Persist the event.` comment in `backend/api.py` with an async call to your data layer (e.g., SQLAlchemy + PostgreSQL). A typical pattern:
+Replace the `# TODO: Persist the event.` comment in `backend/api.py` with an async call to your data layer (e.g., SQLAlchemy + PostgreSQL). A typical pattern:
 ```python
 from sqlalchemy.ext.asyncio import AsyncSession
 from .models import EventModel
 
-async def ingest_event(..., db: AsyncSession = Depends(get_db)):
+async def ingest_event(event: Event, db: AsyncSession = Depends(get_db)):
     db_event = EventModel(**event.dict())
     db.add(db_event)
     await db.commit()
@@ -146,7 +151,7 @@ Push events into a message queue (RabbitMQ, Kafka, or Redis Streams) and have a 
 The repository includes a GitHub Actions workflow (`.github/workflows/ci.yml`) that runs on every push:
 
 * **Linting** – `ruff` (fast Python linter) ensures code style.
-* **Type checking** – `mypy` catches type‑related bugs.
+* **Type‑checking** – `mypy` catches type‑related bugs.
 * **Unit tests** – placeholder folder `tests/` (add your own tests).
 
 You can trigger the workflow locally with:
@@ -159,7 +164,7 @@ act -j lint   # if you have the `act` CLI installed
 ## Security Considerations
 
 * **Secret management** – never commit real secrets. Use a `.env` file (ignored via `.gitignore`) and a secret manager in production (AWS Secrets Manager, Vault, etc.).
-* **CORS** – tighten `allowed_origins` to your domain(s) before exposing the service to the internet.
+* **CORS** – tighten `allowed_origins` to your domain(s) before exposing the service publicly.
 * **Rate limiting** – add a middleware (e.g., `slowapi`) to protect the token endpoint.
 * **Input validation** – the generic `payload: Dict[str, Any]` accepts any JSON. For a production service you’ll want per‑event schemas or JSON‑Schema validation.
 * **HTTPS** – run behind a TLS terminator (NGINX, Traefik, Cloud‑LB) in production.
