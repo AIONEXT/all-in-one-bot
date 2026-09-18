@@ -46,7 +46,7 @@ graph TD;
     Backend -->|Store / Process| DB[(PostgreSQL / Vector Store)];
     Backend -->|Calls| LLM[LLM / Learning Engine];
     Client -->|Sensor APIs| Sensors[OS / Wearable Sensors];
-    Backend -->|Integrations| Ext[External Services (Google, Outlook, Slack)];
+    Backend -->|Integrations| Ext["External Services (Google, Outlook, Slack)"];
 ```
 
 The diagram shows the main data flow:
