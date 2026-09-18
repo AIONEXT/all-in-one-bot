@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from fastapi import (
@@ -36,7 +36,9 @@ ALGORITHM = "HS256"
 
 def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
     to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes=settings.access_token_expire_minutes))
+    expire = datetime.now(UTC) + (
+        expires_delta or timedelta(minutes=settings.access_token_expire_minutes)
+    )
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, settings.secret_key, algorithm=ALGORITHM)
 
@@ -54,7 +56,7 @@ def verify_token(token: str) -> dict[str, Any]:
             raise credentials_exception
         return {"user_id": user_id, "device_id": device_id}
     except JWTError:
-        raise credentials_exception
+        raise credentials_exception from None
 
 # ---------------------------------------------------------------------------
 # FastAPI app configuration
@@ -151,7 +153,7 @@ async def ws_push(socket: WebSocket, device_id: str):
     try:
         while True:
             # Simple keep‑alive ping every 30 seconds.
-            await socket.send_json({"type": "ping", "ts": datetime.now(timezone.utc).isoformat()})
+            await socket.send_json({"type": "ping", "ts": datetime.now(UTC).isoformat()})
             # Wait for any client message (e.g., a pong) to keep the connection alive.
             try:
                 await socket.receive_text()

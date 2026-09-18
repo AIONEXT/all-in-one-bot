@@ -2,7 +2,7 @@ import asyncio
 import json
 import os
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 import aiohttp
@@ -24,7 +24,7 @@ async def send_event(session: aiohttp.ClientSession, event_type: str, payload: d
     url = f"{BASE_URL}/events"
     data = {
         "device_id": DEVICE_ID,
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "type": event_type,
         "payload": payload,
     }
