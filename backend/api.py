@@ -1,13 +1,21 @@
 import logging
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any
 
-from fastapi import FastAPI, Depends, HTTPException, WebSocket, WebSocketDisconnect, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import (
+    Depends,
+    FastAPI,
+    HTTPException,
+    WebSocket,
+    WebSocketDisconnect,
+    status,
+)
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import OAuth2PasswordBearer
+from jose import JWTError, jwt
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from jose import JWTError, jwt
+
 
 # ---------------------------------------------------------------------------
 # Settings – loaded from a .env file in production. Adjust before deploying.
@@ -15,7 +23,7 @@ from jose import JWTError, jwt
 class Settings(BaseSettings):
     secret_key: str = "CHANGE_ME_IN_PRODUCTION"
     access_token_expire_minutes: int = 60
-    allowed_origins: List[str] = ["*"]  # Replace with your domain list in prod.
+    allowed_origins: list[str] = ["*"]  # Replace with your domain list in prod.
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
@@ -26,13 +34,13 @@ settings = Settings()
 # ---------------------------------------------------------------------------
 ALGORITHM = "HS256"
 
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
+def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
     to_encode = data.copy()
     expire = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes=settings.access_token_expire_minutes))
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, settings.secret_key, algorithm=ALGORITHM)
 
-def verify_token(token: str) -> Dict[str, Any]:
+def verify_token(token: str) -> dict[str, Any]:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -40,8 +48,8 @@ def verify_token(token: str) -> Dict[str, Any]:
     )
     try:
         payload = jwt.decode(token, settings.secret_key, algorithms=[ALGORITHM])
-        user_id: Optional[str] = payload.get("sub")
-        device_id: Optional[str] = payload.get("device_id")
+        user_id: str | None = payload.get("sub")
+        device_id: str | None = payload.get("device_id")
         if user_id is None:
             raise credentials_exception
         return {"user_id": user_id, "device_id": device_id}
@@ -71,7 +79,7 @@ logger = logging.getLogger("bot-backend")
 # ---------------------------------------------------------------------------
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
 
-def get_current_user(token: str = Depends(oauth2_scheme)) -> Dict[str, Any]:
+def get_current_user(token: str = Depends(oauth2_scheme)) -> dict[str, Any]:
     # Development shortcut – accept a hard‑coded token.
     if token == "valid-token":
         return {"user_id": "dev_user", "device_id": "dev_device"}
@@ -84,7 +92,7 @@ class Event(BaseModel):
     device_id: str
     timestamp: datetime
     type: str
-    payload: Dict[str, Any]
+    payload: dict[str, Any]
 
 class EventResponse(BaseModel):
     status: str = "accepted"
@@ -100,7 +108,7 @@ class TokenResponse(BaseModel):
 # Routes
 # ---------------------------------------------------------------------------
 @app.post("/events", response_model=EventResponse)
-async def ingest_event(event: Event, user: dict = Depends(get_current_user)):
+async def ingest_event(event: Event, user: dict = Depends(get_current_user)):  # noqa: B008
     """Receive a telemetry event from a device.
     In production store the event (e.g., Postgres, ClickHouse) and forward it
     to an async processing pipeline.
@@ -149,7 +157,7 @@ async def ws_push(socket: WebSocket, device_id: str):
                 await socket.receive_text()
             except WebSocketDisconnect:
                 break
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 – log any unexpected WS error
         logger.error("WebSocket error for %s: %s", device_id, exc)
     finally:
         await socket.close()

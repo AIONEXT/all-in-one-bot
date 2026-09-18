@@ -1,10 +1,9 @@
 import asyncio
 import json
 import os
-import time
 import uuid
 from datetime import datetime, timezone
-from typing import Any, Dict
+from typing import Any
 
 import aiohttp
 import websockets
@@ -18,7 +17,7 @@ TOKEN = os.getenv("TOKEN", "valid-token")  # In prod replace with a real JWT fro
 
 DEVICE_ID = str(uuid.uuid4())
 
-async def send_event(session: aiohttp.ClientSession, event_type: str, payload: Dict[str, Any]):
+async def send_event(session: aiohttp.ClientSession, event_type: str, payload: dict[str, Any]):
     """POST an event to the backend.
     Returns the raw response text for debugging.
     """

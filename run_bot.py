@@ -1,7 +1,8 @@
+import signal
 import subprocess
 import sys
 import time
-import signal
+
 
 def start_backend():
     return subprocess.Popen([sys.executable, "-m", "uvicorn", "backend.api:app",
