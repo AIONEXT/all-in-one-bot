@@ -146,6 +146,29 @@ Push events into a message queue (RabbitMQ, Kafka, or Redis Streams) and have a 
 
 ---
 
+## Building a Windows .exe
+
+The project ships with a PyInstaller build script that bundles the backend
+and client into a single standalone executable — no Python installation
+required on the target machine.
+
+```bash
+# 1. Install build dependencies
+pip install -r requirements-build.txt
+
+# 2. Build the executable
+python build_exe.py
+
+# 3. Run the bundled app
+dist\AllInOneBot\AllInOneBot.exe
+```
+
+The resulting `AllInOneBot.exe` starts both the FastAPI server and the
+example client automatically. It is intended for Windows distribution;
+adjust `build_exe.py` if you need macOS/Linux bundles.
+
+---
+
 ## Testing & CI
 
 The repository includes a GitHub Actions workflow (`.github/workflows/ci.yml`) that runs on every push:

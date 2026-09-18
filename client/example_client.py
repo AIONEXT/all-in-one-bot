@@ -3,6 +3,7 @@ import json
 import os
 import time
 import uuid
+from datetime import datetime, timezone
 from typing import Any, Dict
 
 import aiohttp
@@ -24,7 +25,7 @@ async def send_event(session: aiohttp.ClientSession, event_type: str, payload: D
     url = f"{BASE_URL}/events"
     data = {
         "device_id": DEVICE_ID,
-        "timestamp": time.time(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "type": event_type,
         "payload": payload,
     }
@@ -34,10 +35,13 @@ async def send_event(session: aiohttp.ClientSession, event_type: str, payload: D
 
 async def ws_listener():
     """Maintain a persistent WebSocket connection for push commands.
-    The server sends a ping every ~30 seconds; we answer with a pong.
+    The server sends a ping every ~30 seconds; we answer with a pong.
     """
     ws_url = f"ws://{BASE_URL.replace('http://', '').replace('https://', '')}/ws/{DEVICE_ID}"
-    async with websockets.connect(ws_url, extra_headers={"Authorization": f"Bearer {TOKEN}"}) as ws:
+    async with websockets.connect(
+        ws_url,
+        additional_headers={"Authorization": f"Bearer {TOKEN}"},
+    ) as ws:
         while True:
             try:
                 msg = await ws.recv()
@@ -46,7 +50,7 @@ async def ws_listener():
                     await ws.send("pong")
                 # Future: handle other command types here.
             except websockets.ConnectionClosed:
-                print("WebSocket closed – reconnecting in 5 s")
+                print("WebSocket closed – reconnecting in 5 s")
                 await asyncio.sleep(5)
                 return await ws_listener()
 

@@ -17,6 +17,7 @@ Dist/
 # PyInstaller
 *.manifest
 *.spec
+dist/
 
 # Installer logs
 pip-log.txt

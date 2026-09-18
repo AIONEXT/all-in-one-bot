@@ -1,11 +1,12 @@
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
 from fastapi import FastAPI, Depends, HTTPException, WebSocket, WebSocketDisconnect, status
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, BaseSettings
+from pydantic import BaseModel
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from jose import JWTError, jwt
 
 # ---------------------------------------------------------------------------
@@ -16,9 +17,7 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 60
     allowed_origins: List[str] = ["*"]  # Replace with your domain list in prod.
 
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
 settings = Settings()
 
@@ -29,7 +28,7 @@ ALGORITHM = "HS256"
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     to_encode = data.copy()
-    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=settings.access_token_expire_minutes))
+    expire = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes=settings.access_token_expire_minutes))
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, settings.secret_key, algorithm=ALGORITHM)
 
@@ -144,7 +143,7 @@ async def ws_push(socket: WebSocket, device_id: str):
     try:
         while True:
             # Simple keep‑alive ping every 30 seconds.
-            await socket.send_json({"type": "ping", "ts": datetime.utcnow().isoformat()})
+            await socket.send_json({"type": "ping", "ts": datetime.now(timezone.utc).isoformat()})
             # Wait for any client message (e.g., a pong) to keep the connection alive.
             try:
                 await socket.receive_text()
