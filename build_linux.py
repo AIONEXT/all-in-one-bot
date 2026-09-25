@@ -29,7 +29,7 @@ def create_appdir(project_root, dist_dir):
         d.mkdir(parents=True, exist_ok=True)
 
     # Copy the built executable
-    exe_src = dist_dir / "AllInOneBot" / "AllInOneBot"
+    exe_src = dist_dir / "AIOBot" / "AIOBot"
     if exe_src.exists():
         shutil.copy2(exe_src, usr_bin / "aiobot")
     else:
@@ -128,7 +128,9 @@ Description: All-In-One System Intelligence Bot
     (debian / "control").write_text(control_content)
 
     # Copy executable (would need to be built for Linux)
-    # shutil.copy(dist_dir / "AllInOneBot" / "AllInOneBot", usr_bin / "aiobot")
+    exe_src = dist_dir / "AIOBot" / "AIOBot"
+    if exe_src.exists():
+        shutil.copy2(exe_src, usr_bin / "aiobot")
 
     # Desktop file
     desktop_content = """[Desktop Entry]
@@ -186,11 +188,11 @@ mkdir -p %{buildroot}/usr/lib/aiobot
 mkdir -p %{buildroot}/usr/share/applications
 mkdir -p %{buildroot}/usr/share/icons/hicolor/256x256/apps
 
-# install -m 755 aiobot %{buildroot}/usr/bin/
+# install -m 755 AIOBot %{buildroot}/usr/bin/
 # install -m 644 aiobot.desktop %{buildroot}/usr/share/applications/
 
 %files
-/usr/bin/aiobot
+/usr/bin/AIOBot
 /usr/lib/aiobot/
 /usr/share/applications/aiobot.desktop
 /usr/share/icons/hicolor/256x256/apps/aiobot.png
@@ -226,10 +228,12 @@ def main():
     print("[build] Building Linux executable with PyInstaller...")
     spec_content = f'''# -*- mode: python ; coding: utf-8 -*-
 
+from pathlib import Path
+
 block_cipher = None
 
 a = Analysis(
-    ['{project_root}/run_bot.py'],
+    ['{project_root}/aio_bot/gui/app.py'],
     pathex=['{project_root}'],
     binaries=[],
     datas=[
@@ -283,14 +287,14 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     [],
-    name='AllInOneBot',
+    name='AIOBot',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
     upx_exclude=[],
     runtime_tmpdir=None,
-    console=True,
+    console=False,  # GUI app
     disable_windowed_traceback=False,
     target_arch=None,
     codesign_identity=None,
