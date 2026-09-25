@@ -73,18 +73,21 @@ def build_appimage(project_root):
     dist_dir = project_root / "dist"
     appdir = create_appdir(project_root, dist_dir)
 
-    # Download appimagetool if not present
-    appimagetool = dist_dir / "appimagetool-x86_64.AppImage"
-    if not appimagetool.exists():
+    # Use appimagetool from PATH (downloaded in CI)
+    appimagetool = shutil.which("appimagetool")
+    if not appimagetool:
+        # Fallback: download it
+        appimagetool_path = dist_dir / "appimagetool-x86_64.AppImage"
         run([
-            "wget", "-q", "-O", str(appimagetool),
+            "wget", "-q", "-O", str(appimagetool_path),
             "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
         ])
-        appimagetool.chmod(0o755)
+        appimagetool_path.chmod(0o755)
+        appimagetool = str(appimagetool_path)
 
     # Build AppImage
     output = dist_dir / "AIOBot-2.0.0-x86_64.AppImage"
-    run([str(appimagetool), str(appdir), str(output)])
+    run([appimagetool, str(appdir), str(output)])
 
     print(f"[build] AppImage created: {output}")
     return output

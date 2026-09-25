@@ -35,14 +35,18 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Install dependencies
+      - name: Install system dependencies for GUI testing
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgl1-mesa-glx libegl1-mesa xvfb
+      - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install pytest
       - name: Run tests
         run: |
-          python test_imports.py
+          xvfb-run -a python test_imports.py
           pytest -q tests || echo "No tests found"
 
   build-windows:
@@ -109,7 +113,12 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y python3-dev libglib2.0-dev libqt6widgets6 libqt6gui6 \
-            appimagetool dpkg-dev rpm
+            dpkg-dev rpm wget
+      - name: Download appimagetool
+        run: |
+          wget -q -O /tmp/appimagetool "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
+          chmod +x /tmp/appimagetool
+          echo "/tmp" >> $GITHUB_PATH
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip

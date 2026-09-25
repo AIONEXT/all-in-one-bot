@@ -30,6 +30,8 @@ def main():
     # PyInstaller spec for macOS
     spec_content = f'''# -*- mode: python ; coding: utf-8 -*-
 
+from pathlib import Path
+
 block_cipher = None
 
 a = Analysis(
