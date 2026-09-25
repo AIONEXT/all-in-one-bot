@@ -4,8 +4,8 @@ Usage:
     pip install -r requirements-build.txt
     python build_exe.py
 
-This bundles the FastAPI backend and the example client into a single
-executable that can be run on any Windows machine without Python installed.
+This bundles the FastAPI backend, example client, and the new AIO Bot modules
+into a single executable that can be run on any Windows machine without Python installed.
 """
 import shutil
 import subprocess
@@ -45,6 +45,7 @@ a = Analysis(
     datas=[
         ('backend', 'backend'),
         ('client', 'client'),
+        ('aio_bot', 'aio_bot'),
         ('.env.example', '.'),
     ],
     hiddenimports=[
@@ -64,6 +65,34 @@ a = Analysis(
         'websockets.server',
         'websockets.client',
         'dotenv',
+        'psutil',
+        'GPUtil',
+        'croniter',
+        'cryptography',
+        'cryptography.fernet',
+        'cryptography.hazmat.primitives.kdf.pbkdf2',
+        'PySide6',
+        'PySide6.QtCore',
+        'PySide6.QtWidgets',
+        'PySide6.QtGui',
+        'aio_bot.core.bot',
+        'aio_bot.config.manager',
+        'aio_bot.monitoring.system_monitor',
+        'aio_bot.learning.habit_engine',
+        'aio_bot.data_mgmt.file_organizer',
+        'aio_bot.health.health_monitor',
+        'aio_bot.automation.task_runner',
+        'aio_bot.automation.scheduler',
+        'aio_bot.security.manager',
+        'aio_bot.gui.main_window',
+        'aio_bot.gui.dashboard',
+        'aio_bot.gui.system_monitor_widget',
+        'aio_bot.gui.health_widget',
+        'aio_bot.gui.learning_widget',
+        'aio_bot.gui.files_widget',
+        'aio_bot.gui.automation_widget',
+        'aio_bot.gui.settings_dialog',
+        'aio_bot.gui.app',
     ],
     hookspath=[],
     runtime_hooks=[],

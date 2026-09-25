@@ -1,204 +1,231 @@
-# All‑In‑One Personal Bot
+# AIO Bot - All-In-One Desktop Intelligence System
 
-A **self‑hosted** service that connects to any device (mobile, desktop, wearables), ingests sensor data, learns a user’s routines, and provides periodic updates, reminders, and context‑aware actions. The prototype consists of:
+A **fully automated, AI-driven master mind** for comprehensive system management. A single desktop bot that monitors every aspect of your machine, learns your habits, auto-maintains your system, and keeps everything ready and updated across Windows, macOS, and Linux.
 
-* **FastAPI backend** – handles authentication, event ingestion, and a WebSocket channel for push commands.
-* **Python client** – a lightweight example that streams dummy accelerometer events and maintains a WebSocket connection.
-* **Docker support** – build and run the backend in a container.
-* **CI pipeline** – GitHub Actions linting and basic tests (future ready).
+## Overview
 
-The repository is organized for commercial use: a permissive MIT license, a Dockerfile, a `docker‑compose.yml` for local development, and a clear README.
+AIO Bot is a comprehensive system intelligence platform that combines:
 
----
-
-## Table of Contents
-
-- [Features](#features)
-- [Architecture Overview](#architecture-overview)
-- [Quick Start (Local Development)](#quick-start-local-development)
-- [Running with Docker](#running-with-docker)
-- [API Reference](#api-reference)
-- [Customization & Extensibility](#customization--extensibility)
-- [Testing & CI](#testing--ci)
-- [Security Considerations](#security-considerations)
-- [License](#license)
-- [Contributing](#contributing)
-
----
+- **Live System Monitoring** - CPU, RAM, Disk, Network, GPU, Processes, Temperatures
+- **AI Habit Learning** - Pattern recognition, predictive scheduling, behavior analysis
+- **Smart File Management** - Auto-organization, duplicate detection, cleanup, backups
+- **Health Monitoring** - Service monitoring, SMART disk health, system logs, update tracking
+- **Auto-Healing** - Self-maintenance, service restart, temp cleanup, auto-updates
+- **Cross-Platform GUI** - Native desktop app for Windows, macOS, and Linux
+- **Security First** - Local-first data, encryption, audit logging, permission management
 
 ## Features
 
-- **Device‑agnostic remote connection** – devices authenticate with JWTs and open a persistent WebSocket.
-- **Event ingestion** – `/events` receives arbitrary JSON payloads (sensor data, app usage, etc.).
-- **Push notifications** – the backend can send commands, reminders, or UI overlay instructions via WebSocket.
-- **Extensible authentication** – demo token endpoint provided; replace with OAuth2, SSO, or custom device‑pairing flow.
-- **CORS enabled** – safe for front‑end integrations.
-- **Docker‑first** – container builds in seconds, ready for cloud or on‑prem deployments.
-- **CI ready** – linting with `ruff`/`flake8` and type‑checking with `mypy` are wired in GitHub Actions.
+### System Monitoring
+- Real-time CPU, memory, disk, network, and GPU metrics
+- Per-core CPU usage, frequency monitoring, load averages
+- Process tracking with top consumers
+- SMART disk health monitoring (reallocated sectors, temperature, power-on hours)
+- Cross-platform: Windows (WMI), macOS (powermetrics), Linux (/proc, sysfs)
 
----
+### AI-Driven Habit Learning
+- Temporal pattern detection (hourly, daily, weekly)
+- Application usage pattern recognition
+- Sequence prediction (A followed by B)
+- Predictive task scheduling based on learned habits
+- Privacy-first: local-only processing with optional anonymization
+- Model persistence and automatic retraining
 
-## Architecture Overview
+### File & Data Management
+- Smart file categorization (Documents, Images, Videos, Code, etc.)
+- Duplicate detection by content hash (SHA-256)
+- Automated cleanup of temp files, old downloads, large unused files
+- Configurable organization rules with custom extensions
+- Automated backups with retention policies
 
-```mermaid
-graph TD;
-    Client[Device Client] -->|WebSocket / HTTPS| Backend[FastAPI Backend];
-    Backend -->|Store / Process| DB[(PostgreSQL / Vector Store)];
-    Backend -->|Calls| LLM[LLM / Learning Engine];
-    Client -->|Sensor APIs| Sensors[OS / Wearable Sensors];
-    Backend -->|Integrations| Ext["External Services (Google, Outlook, Slack)"];
+### System Health Monitoring
+- Service/daemon monitoring with auto-restart for critical services
+- Windows Event Logs, macOS Unified Logs, Linux journalctl parsing
+- SMART disk health with predictive failure detection
+- System update checking (Windows Update, macOS softwareupdate, apt/dnf/pacman)
+- Critical alert threshold configuration
+
+### Automation & Self-Healing
+- Priority-based task queue with retry logic
+- Cron-style scheduling with maintenance windows
+- Predictive task scheduling from habit engine
+- Auto-fix for common issues (high CPU, memory, disk)
+- Configurable maintenance windows (default 2-4 AM)
+
+### Cross-Platform Desktop GUI
+- Native PySide6/Qt interface
+- Real-time dashboard with metric cards
+- Detailed system monitor (CPU, Memory, Disk, Network, GPU, Processes)
+- Health overview with service status and disk health
+- Learning insights with patterns and predictions
+- File management with duplicate cleanup
+- Automation task scheduler and history
+- Comprehensive settings panel
+
+### Security & Privacy
+- Local-first architecture (no cloud required)
+- AES-256 encryption for sensitive data at rest
+- API key management with rotation
+- Audit logging for all security events
+- Rate limiting and account lockout protection
+- Data classification (Public/Internal/Confidential/Restricted)
+
+## Architecture
+
+```
++-------------------------------------------------------------+
+|                      AIO Bot Core                            |
++-------------------------------------------------------------+
+  +--------------+  +--------------+  +--------------+       
+  |  Monitoring  |  |   Learning   |  | Data Mgmt    |       
+  |  (psutil,    |  |  (Pattern    |  |  (Organize,  |       
+  |   GPUtil,    |  |   Detection, |  |   Dedup,     |       
+  |   Platform)  |  |   Prediction)|  |   Backup)    |       
+  +------+-------+  +------+-------+  +------+-------+       
+         |                 |                 |                 
+         +-----------------+-----------------+                 
+                           |                                   
+              +------------+------------+                       
+              |    Task Runner &       |                       
+              |    Scheduler           |                       
+              |  (Auto-fix, Cron,      |                       
+              |   Maintenance)         |                       
+              +-----------+------------+                       
+                          |                                     
+         +----------------+----------------+                     
+         |                |                |                     
+   +----------+   +--------------+  +--------------+          
+   | Security |   |   Health     |  |    GUI       |          
+   | Manager  |   |  Monitor     |  | (PySide6)    |          
+   +----------+   +--------------+  +--------------+          
 ```
 
-The diagram shows the main data flow:
+## Quick Start
 
-* Devices send telemetry to the **backend** via HTTPS POSTs and maintain a **WebSocket** for real‑time commands.
-* The backend can persist events in a **database**, forward them to a **learning engine** (e.g., OpenAI fine‑tuning) and call third‑party APIs (Google Calendar, Slack, etc.).
-* The **mirror‑mask UI** lives on the device side and reacts to messages received over the WebSocket.
+### Prerequisites
+- Python 3.11+
+- pip
 
----
-
-## Quick Start (Local Development)
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/your-org/all-in-one-bot.git
-   cd all-in-one-bot
-   ```
-
-2. **Create a virtual environment**
-   ```bash
-   python3 -m venv .venv
-   source .venv/bin/activate
-   ```
-
-3. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. **Run the backend**
-   ```bash
-   uvicorn backend.api:app --host 0.0.0.0 --port 8000 --reload
-   ```
-   The server will be reachable at `http://localhost:8000`.
-
-5. **Open a second terminal** and run the example client:
-   ```bash
-   source .venv/bin/activate
-   python client/example_client.py
-   ```
-   You should see the client posting dummy events every 5 seconds and a ping/pong exchange over the WebSocket.
-
-6. **Verify**
-   ```bash
-   curl http://localhost:8000/ping
-   # → {"msg":"pong"}
-   ```
-
----
-
-## Running with Docker
-
-The repository ships with a Dockerfile that builds the backend and a `docker‑compose.yml` for quick orchestration.
+### Installation
 
 ```bash
-# Build and start the backend (exposes port 8000)
- docker compose up --build -d
+# Clone the repository
+git clone https://github.com/your-org/all-in-one-bot.git
+cd all-in-one-bot
+
+# Create virtual environment
+python3 -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run the GUI application
+python run_bot.py
 ```
 
-You can now reach the API at `http://localhost:8000`. The client works unchanged because it still points to `http://localhost:8000`.
-
----
-
-## API Reference
-
-| Method | Path | Description |
-|--------|------|-------------|
-| `POST` | `/token` | Demo endpoint that returns a JWT. Replace with a real auth flow in production. |
-| `GET`  | `/ping` | Health check – returns `{ "msg": "pong" }`. |
-| `POST` | `/events` | Ingest a telemetry event. Payload matches the `Event` model (device_id, timestamp, type, payload). |
-| `WS`   | `/ws/{device_id}` | Persistent channel for push commands. Server sends a `ping` every 30 s; client should reply with any text (e.g., `pong`). |
-
-All routes are protected by JWT authentication (except `/token` in the demo).
-
----
-
-## Customization & Extensibility
-
-### Adding a Database
-Replace the `# TODO: Persist the event.` comment in `backend/api.py` with an async call to your data layer (e.g., SQLAlchemy + PostgreSQL). A typical pattern:
-```python
-from sqlalchemy.ext.asyncio import AsyncSession
-from .models import EventModel
-
-async def ingest_event(event: Event, db: AsyncSession = Depends(get_db)):
-    db_event = EventModel(**event.dict())
-    db.add(db_event)
-    await db.commit()
-    return EventResponse()
-```
-
-### Real Device Authentication
-Implement a `/pair` endpoint that returns a short‑lived pairing code. The device scans a QR code, posts the code, and receives a signed JWT.
-
-### Learning Engine
-Push events into a message queue (RabbitMQ, Kafka, or Redis Streams) and have a separate worker poll the queue, compute habit patterns, and write suggestions back to a dedicated `/commands` endpoint that the client can fetch via WebSocket.
-
----
-
-## Building a Windows .exe
-
-The project ships with a PyInstaller build script that bundles the backend
-and client into a single standalone executable — no Python installation
-required on the target machine.
+### Building Standalone Executable (Windows)
 
 ```bash
-# 1. Install build dependencies
+# Install build dependencies
 pip install -r requirements-build.txt
 
-# 2. Build the executable
+# Build the executable
 python build_exe.py
 
-# 3. Run the bundled app
+# Run the bundled app
 dist\AllInOneBot\AllInOneBot.exe
 ```
 
-The resulting `AllInOneBot.exe` starts both the FastAPI server and the
-example client automatically. It is intended for Windows distribution;
-adjust `build_exe.py` if you need macOS/Linux bundles.
+### Running with Docker
 
----
-
-## Testing & CI
-
-The repository includes a GitHub Actions workflow (`.github/workflows/ci.yml`) that runs on every push:
-
-* **Linting** – `ruff` (fast Python linter) ensures code style.
-* **Type‑checking** – `mypy` catches type‑related bugs.
-* **Unit tests** – placeholder folder `tests/` (add your own tests).
-
-You can trigger the workflow locally with:
 ```bash
-act -j lint   # if you have the `act` CLI installed
+# Build and start the backend
+docker compose up --build -d
 ```
 
----
+## Configuration
+
+Configuration is stored in:
+- **Windows**: `%LOCALAPPDATA%\AIOBot\config.json`
+- **macOS/Linux**: `~/.config/AIOBot/config.json`
+
+Key configuration sections:
+- `monitoring` - Intervals, thresholds, component enables
+- `learning` - Model updates, detection window, privacy mode
+- `data_mgmt` - Organization rules, cleanup, backup settings
+- `health` - Check intervals, log sources, SMART monitoring
+- `automation` - Maintenance window, auto-fix settings
+- `security` - Encryption, auth, audit logging
+- `gui` - Theme, language, refresh rates
+
+## Project Structure
+
+```
+all-in-one-bot/
+├── aio_bot/                    # Core AIO Bot modules
+│   ├── core/                   # Main bot orchestration
+│   ├── config/                 # Configuration management
+│   ├── monitoring/             # System monitoring
+│   ├── learning/               # Habit learning engine
+│   ├── data_mgmt/              # File organization
+│   ├── health/                 # Health monitoring
+│   ├── automation/             # Task runner & scheduler
+│   ├── security/               # Security manager
+│   └── gui/                    # PySide6 desktop GUI
+├── backend/                    # FastAPI backend (legacy)
+├── client/                     # Example client (legacy)
+├── run_bot.py                  # Main entry point
+├── build_exe.py                # PyInstaller build script
+├── requirements.txt            # Runtime dependencies
+└── requirements-build.txt      # Build dependencies
+```
+
+## Development
+
+### Code Style
+```bash
+# Linting
+ruff check .
+
+# Type checking
+mypy .
+
+# Format
+ruff format .
+```
+
+### Running Tests
+```bash
+pytest tests/
+```
+
+## Platform Support
+
+| Feature | Windows | macOS | Linux |
+|---------|---------|-------|-------|
+| System Monitoring | Yes | Yes | Yes |
+| GPU Monitoring | Yes | Yes | Yes |
+| SMART Disk Health | Yes | Yes | Yes |
+| Service Monitoring | Yes | Yes | Yes |
+| Event Logs | Yes | Yes | Yes |
+| Update Checking | Yes | Yes | Yes |
+| Native GUI | Yes | Yes | Yes |
+| Auto-start | Yes | Yes | Yes |
+| Packaging | EXE/MSI | DMG | AppImage/deb/rpm |
 
 ## Security Considerations
 
-* **Secret management** – never commit real secrets. Use a `.env` file (ignored via `.gitignore`) and a secret manager in production (AWS Secrets Manager, Vault, etc.).
-* **CORS** – tighten `allowed_origins` to your domain(s) before exposing the service publicly.
-* **Rate limiting** – add a middleware (e.g., `slowapi`) to protect the token endpoint.
-* **Input validation** – the generic `payload: Dict[str, Any]` accepts any JSON. For a production service you’ll want per‑event schemas or JSON‑Schema validation.
-* **HTTPS** – run behind a TLS terminator (NGINX, Traefik, Cloud‑LB) in production.
-
----
+- All data processed locally by default
+- Encryption keys generated per-installation
+- No telemetry without explicit consent
+- Audit log for all administrative actions
+- API keys hashed with SHA-256 before storage
+- Secure file deletion for sensitive data
 
 ## License
 
-MIT License – see the `LICENSE` file for details.
-
----
+MIT License - see the `LICENSE` file for details.
 
 ## Contributing
 
@@ -206,4 +233,4 @@ Contributions are welcome! Fork the repo, create a feature branch, and open a PR
 
 ---
 
-**Happy hacking!**
+**Happy system management!**
