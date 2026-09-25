@@ -27,107 +27,61 @@ def main():
         if d.exists():
             shutil.rmtree(d)
 
-    # PyInstaller spec for macOS
-    spec_content = f'''# -*- mode: python ; coding: utf-8 -*-
+    # Use PyInstaller command-line with all options
+    # This avoids complex spec file issues
+    pyinstaller_cmd = [
+        sys.executable, "-m", "PyInstaller",
+        "--noconfirm",
+        "--clean",
+        "--windowed",  # No console window (GUI app)
+        "--name", "AIOBot",
+        "--distpath", str(dist_dir),
+        "--workpath", str(build_dir),
+        "--add-data", f"{project_root}/aio_bot:aio_bot",
+        "--hidden-import", "psutil",
+        "--hidden-import", "GPUtil",
+        "--hidden-import", "croniter",
+        "--hidden-import", "PySide6",
+        "--hidden-import", "yaml",
+        "--hidden-import", "watchdog",
+        "--hidden-import", "plyer",
+        "--hidden-import", "keyring",
+        "--hidden-import", "cryptography",
+        "--hidden-import", "aio_bot.config.manager",
+        "--hidden-import", "aio_bot.core.bot",
+        "--hidden-import", "aio_bot.monitoring.system_monitor",
+        "--hidden-import", "aio_bot.learning.habit_engine",
+        "--hidden-import", "aio_bot.data_mgmt.file_organizer",
+        "--hidden-import", "aio_bot.health.health_monitor",
+        "--hidden-import", "aio_bot.automation.task_runner",
+        "--hidden-import", "aio_bot.automation.scheduler",
+        "--hidden-import", "aio_bot.security.manager",
+        "--hidden-import", "aio_bot.gui.app",
+        "--hidden-import", "aio_bot.gui.main_window",
+        "--hidden-import", "aio_bot.gui.dashboard",
+        "--hidden-import", "aio_bot.gui.system_monitor_widget",
+        "--hidden-import", "aio_bot.gui.health_widget",
+        "--hidden-import", "aio_bot.gui.learning_widget",
+        "--hidden-import", "aio_bot.gui.files_widget",
+        "--hidden-import", "aio_bot.gui.automation_widget",
+        "--hidden-import", "aio_bot.gui.settings_dialog",
+        "--exclude-module", "tkinter",
+        "--exclude-module", "matplotlib",
+        "--exclude-module", "numpy",
+        "--exclude-module", "pandas",
+        "--exclude-module", "scipy",
+        "--osx-bundle-identifier", "com.aiobot.app",
+        f"{project_root}/aio_bot/gui/app.py"
+    ]
 
-from pathlib import Path
-
-block_cipher = None
-
-a = Analysis(
-    ['{project_root}/aio_bot/gui/app.py'],
-    pathex=['{project_root}'],
-    binaries=[],
-    datas=[
-        ('{project_root}/aio_bot', 'aio_bot'),
-    ],
-    hiddenimports=[
-        'psutil',
-        'GPUtil',
-        'croniter',
-        'PySide6',
-        'yaml',
-        'watchdog',
-        'plyer',
-        'keyring',
-        'cryptography',
-        'aio_bot.config.manager',
-        'aio_bot.core.bot',
-        'aio_bot.monitoring.system_monitor',
-        'aio_bot.learning.habit_engine',
-        'aio_bot.data_mgmt.file_organizer',
-        'aio_bot.health.health_monitor',
-        'aio_bot.automation.task_runner',
-        'aio_bot.automation.scheduler',
-        'aio_bot.security.manager',
-        'aio_bot.gui.app',
-        'aio_bot.gui.main_window',
-        'aio_bot.gui.dashboard',
-        'aio_bot.gui.system_monitor_widget',
-        'aio_bot.gui.health_widget',
-        'aio_bot.gui.learning_widget',
-        'aio_bot.gui.files_widget',
-        'aio_bot.gui.automation_widget',
-        'aio_bot.gui.settings_dialog',
-    ],
-    hookspath=[],
-    hooksconfig={{}},
-    runtime_hooks=[],
-    excludes=['tkinter', 'matplotlib', 'numpy', 'pandas', 'scipy'],
-    win_no_prefer_redirects=False,
-    win_private_assemblies=False,
-    cipher=block_cipher,
-    noarchive=False,
-)
-
-# macOS app bundle - use EXE for GUI app (no console)
-exe = EXE(
-    a.pure,
-    a.zipped_data,
-    a.scripts,
-    a.binaries,
-    a.zipfiles,
-    a.datas,
-    [],
-    name='AIOBot',
-    debug=False,
-    bootloader_ignore_signals=False,
-    strip=False,
-    upx=True,
-    upx_exclude=[],
-    runtime_tmpdir=None,
-    console=False,
-    disable_windowed_traceback=False,
-    target_arch=None,
-    codesign_identity=None,
-    entitlements_file=None,
-)
-
-# macOS app bundle
-app = BUNDLE(
-    exe,
-    strip=False,
-    upx=True,
-    upx_exclude=[],
-    name='AIOBot',
-    icon='{project_root}/assets/icon.icns' if Path('{project_root}/assets/icon.icns').exists() else None,
-    bundle_identifier='com.aiobot.app',
-    info_plist={{
-        'CFBundleName': 'AIO Bot',
-        'CFBundleDisplayName': 'AIO Bot',
-        'CFBundleVersion': '2.0.0',
-        'CFBundleShortVersionString': '2.0.0',
-        'NSHighResolutionCapable': True,
-        'LSUIElement': True,  # Run as background app
-    }},
-)
-'''
-
-    spec_path = project_root / "aio_bot_macos.spec"
-    spec_path.write_text(spec_content)
+    # Add icon if it exists
+    icon_path = project_root / "assets" / "icon.icns"
+    if icon_path.exists():
+        pyinstaller_cmd.insert(-1, "--icon")
+        pyinstaller_cmd.insert(-1, str(icon_path))
 
     # Run PyInstaller
-    run([sys.executable, "-m", "PyInstaller", str(spec_path), "--noconfirm", "--clean"])
+    run(pyinstaller_cmd)
 
     # Create DMG
     app_path = dist_dir / "AIOBot.app"
