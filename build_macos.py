@@ -35,7 +35,7 @@ from pathlib import Path
 block_cipher = None
 
 a = Analysis(
-    ['{project_root}/run_bot.py'],
+    ['{project_root}/aio_bot/gui/app.py'],
     pathex=['{project_root}'],
     binaries=[],
     datas=[
