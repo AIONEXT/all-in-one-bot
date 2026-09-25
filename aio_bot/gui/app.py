@@ -55,3 +55,14 @@ async def run_gui_app(bot: AIOBot):
     else:
         logging.error("Failed to initialize bot")
         return 1
+
+
+def main():
+    """Main entry point for the GUI application."""
+    setup_logging()
+    bot = AIOBot()
+    return asyncio.run(run_gui_app(bot))
+
+
+if __name__ == "__main__":
+    sys.exit(main())
